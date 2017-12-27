@@ -1,4 +1,5 @@
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -13,56 +14,103 @@ import java.util.Set;
 public class GraphUtils {
 
 	public static int minDistance(Graph graph, String src, String dest) {
-
-		if (graph == null || src == null || dest == null) {
-			return -1;
+		int result = -1;
+		if (graph == null || src == null || dest == null || !graph.containsElement(src) || !graph.containsElement(dest)) {
+			return result;
 		}
-		if (graph.containsElement(src) == false || graph.containsElement(dest) == false) {
-			return -1;
-		}
+		
 		if (Objects.equals(src, dest)) {
-			// System.out.println(src + " == " + dest);
 			return 0;
 		}
 
 		BreadthFirstSearch bfs = new BreadthFirstSearch(graph);
-		boolean result = bfs.bfs(graph.getNode(src), dest);
-		System.out.println(result);
-
-		if (result == false) {
-			return -1;
+		boolean nodeExist = bfs.bfs(graph.getNode(src), dest);
+		if (!nodeExist) {
+			return result;
 		}
-		/*
-		 * System.out.println(); System.out.println(bfs.marked);
-		 * System.out.println(bfs.graph.getNumNodes());
-		 */
-		return bfs.marked.size() > 1 ? bfs.marked.size() / 2 : 1;
+		return bfs.marked.size() > 1 ? bfs.marked.size()/ 2  : 1;
 	}
 
 	public static Set<String> nodesWithinDistance(Graph graph, String src, int distance) {
 
-		if (graph == null || src == null || distance <= 0) {
+		if (graph == null || src == null || distance <= 0 || !graph.containsElement(src)) {
 			return null;
 		}
 
-		BreadthFirstSearch bfs = new BreadthFirstSearch(graph);
-		boolean srcExistInGraph = bfs.bfs(graph.getStartingNode(), src);
+		Node nodeSrc = graph.getNode(src);
 
-		if (!srcExistInGraph)
-			return null;
-
-		Set<String> nodes = new HashSet<>();
-		System.out.println("Distance " + distance);
-		System.out.println("Number of edges in graph " + graph.getNumEdges());
+		Set<String> nodes = nodesWithinDistance(graph, nodeSrc, distance, 0, new HashSet<String>());
+		nodes.remove(src);
 
 		return nodes;
 	}
 
-	public static boolean isHamiltonianPath(Graph g, List<String> values) {
+	private static Set<String> nodesWithinDistance(Graph graph, Node nodeSrc, int distance, int currentDistance,
+			Set<String> result) {
 
-		/* IMPLEMENT THIS METHOD! */
+		if (distance == currentDistance) {
+			return result;
+		} else {
+			Set<Edge> adjacencySetsAux = new HashSet<Edge>();
+			adjacencySetsAux = graph.adjacencySets.get(nodeSrc);
 
-		return true; // this line is here only so this code will compile if you don't modify it
+			if (adjacencySetsAux != null) {
+				for (Edge edge : adjacencySetsAux) {
+					String adjacencyNodeLabel = edge.getDestination().getElement();
+					result.add(adjacencyNodeLabel);
+					nodesWithinDistance(graph, edge.getDestination(), distance, currentDistance + 1, result);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	public static boolean isHamiltonianPath(Graph graph, List<String> values) {
+        ArrayList<Node> markedNodes = new ArrayList<>();
+		boolean result = false;
+		if (graph != null && values != null && !values.isEmpty()) {
+			if (values.get(0) == values.get(values.size() - 1)) {
+				for (int i = 0; i < values.size() - 1; i++) {
+					if (graph.containsElement(values.get(i))) {
+						Node node = graph.getNode(values.get(i));
+						Node nodeNext = graph.getNode(values.get(i + 1));
+						Set<Edge> adjacencySetsAux = graph.adjacencySets.get(node);
+						if (SetContainsValue(adjacencySetsAux, nodeNext)) {
+					
+							if (markedNodes.contains(node))
+							{
+								return false;
+							}
+							markedNodes.add(node);
+						} else {
+							return false;
+						}
+					}
+					result = true;
+				}
+			}
+		
+			Set<Node> nodesOfGraph = graph.getAllNodes();
+			nodesOfGraph.removeAll(markedNodes);
+			if (!nodesOfGraph.isEmpty())
+				return false;
+			
+			
+
+		}
+
+		return result;
+	}
+
+	private static boolean SetContainsValue(Set<Edge> set, Node node) {
+		boolean result = false;
+		for (Edge edge : set) {
+			if (edge.getDestination().element.equals(node.element))
+				result = true;
+
+		}
+		return result;
 	}
 
 }
